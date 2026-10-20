@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ホットスナック管理</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FF管理">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--bd:#ddd9d0;--ac:#d9480f;--ok:#ebfbee;--yl:#fde3ef;--yl-tx:#7a1b4b;--rd:#e03131;--cw:125px;box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171716;--card:#232321;--tx:#f0efe9;--mu:#a3a29b;--bd:#3a3935;--ok:#16301c;--yl:#4f1d3b;--yl-tx:#ffd9ec}}
+:root[data-theme="dark"]{--bg:#171716;--card:#232321;--tx:#f0efe9;--mu:#a3a29b;--bd:#3a3935;--ok:#16301c;--yl:#4f1d3b;--yl-tx:#ffd9ec}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--card);border-bottom:1px solid var(--bd);padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.tabs{display:flex;gap:6px}
+.tab{position:relative;font-size:1rem;font-weight:600;padding:8px 14px;border-radius:8px}
+.tab.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.badge{position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;border-radius:9px;background:var(--yl);color:var(--yl-tx);font-size:.72rem;line-height:18px;text-align:center;padding:0 4px;box-sizing:border-box}
+.badge.r{background:var(--rd);color:#fff}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto}
+.ctl label{font-size:.8rem;color:var(--mu);display:flex;align-items:center;gap:4px}
+input,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 7px;box-sizing:border-box}
+input.num{cursor:pointer;caret-color:transparent}
+input.num.act{outline:3px solid var(--ac)}
+.ctl input.s{width:52px;text-align:center}
+#newName{width:140px}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:6px;padding:6px 10px}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+button.end{background:#1c7ed6;border-color:#1c7ed6;color:#fff;font-weight:700}
+button:disabled{opacity:.4;cursor:default}
+.tw{margin:8px 12px;overflow:auto;-webkit-overflow-scrolling:touch;background:var(--card);border:1px solid var(--bd);border-radius:10px}
+table{border-collapse:separate;border-spacing:0;table-layout:fixed}
+th,td{padding:4px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);vertical-align:top}
+th{position:sticky;top:0;z-index:4;background:var(--card);font-size:.72rem;color:var(--mu);text-align:center;padding:6px 4px}
+th.nm0,td.nm{position:sticky;left:0;width:180px;background:var(--card);z-index:3}
+th.nm0{z-index:6}
+th.c,td.b{width:var(--cw)}
+th.add,td.add{position:sticky;right:0;width:44px;background:var(--card);z-index:3;border-right:0;padding:2px;text-align:center}
+th.add{z-index:6}
+#addCol{width:38px;height:38px;border-radius:19px;padding:0;font-size:1.1rem;background:var(--ac);border-color:var(--ac);color:#fff}
+td.nm{vertical-align:middle}
+td.nm .n{display:block;width:100%;font-size:1.2rem;font-weight:700;line-height:1.25;padding:8px 6px;resize:none;overflow:hidden;color:#4a3b00;caret-color:#4a3b00;background:#ffe066;border-color:#e6b800}
+td.nm .sh{display:flex;align-items:center;gap:3px;margin-top:6px;font-size:.72rem;color:var(--mu)}
+td.nm .sh input{width:42px;text-align:center;padding:3px}
+td.nm .dsc{margin-top:6px;font-size:.75rem;color:var(--mu);line-height:1.4}
+td.nm .del{margin-top:5px;font-size:.68rem;color:var(--mu);padding:1px 6px}
+td.b.ok{background:var(--ok)}
+td.b.pl{background:var(--card)}
+td.b.yel{background:var(--yl);color:var(--yl-tx)}
+td.b.red{background:var(--rd);color:#fff;animation:bl 1s infinite}
+@keyframes bl{50%{filter:brightness(1.35)}}
+.io{display:flex;justify-content:center;gap:6px}
+.io label{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.66rem;color:var(--mu)}
+td.yel .io label,td.red .io label{color:inherit}
+.io input{width:44px;text-align:center;font-weight:700;font-size:1rem;padding:5px 3px}
+.i{font-size:.88rem;margin-top:5px;line-height:1.4;text-align:center;font-variant-numeric:tabular-nums;color:var(--mu)}
+td.yel .i,td.red .i{color:inherit}
+.i b{font-size:1rem}
+.clr{display:block;margin:2px auto 0;font-size:.7rem;padding:2px 6px;color:inherit;background:transparent;border:0;text-decoration:underline}
+.pad{display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--card);border-top:2px solid var(--ac);padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 12px rgba(0,0,0,.2)}
+.pad.on{display:block}
+.pt{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.pt .t{flex:1;font-size:.85rem;color:var(--mu)}
+.pv{min-width:90px;text-align:center;font-size:1.6rem;font-weight:700;border:1px solid var(--bd);border-radius:6px;padding:0 10px}
+.pk{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:460px;margin:0 auto}
+.pk button{height:46px;font-size:1.4rem;font-weight:700}
+.pk .ok{grid-row:span 2;height:auto;background:var(--ac);border-color:var(--ac);color:#fff;font-size:1.1rem}
+.pk .z{grid-column:span 2}
+.lock{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.55);align-items:center;justify-content:center}
+.lock.on{display:flex}
+.lk{background:var(--card);border-radius:14px;padding:18px;text-align:center;min-width:300px}
+.pk .okb{background:var(--ac);border-color:var(--ac);color:#fff;font-size:1.1rem}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:8px;z-index:60;display:none;max-width:90vw}
+#rep{position:fixed;left:-10000px;top:0;width:794px;height:1123px;background:#fff;color:#000;padding:40px;box-sizing:border-box;overflow:hidden;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+#rep table{border-collapse:collapse;width:100%;margin-bottom:14px}
+#rep td,#rep th{border:1px solid #888;padding:5px 7px;font-size:13px;text-align:left;vertical-align:top;background:#fff}
+#rep th{background:#eee;color:#000}
+#rep .r{text-align:right}
+</style>
+</head>
+<body>
+<div class="top" id="top">
+  <div class="tabs" id="tabs"></div>
+  <button class="end" id="end">■ 終了（PDF保存）</button>
+  <button id="undo" disabled>↶ 元に戻す</button>
+  <button id="dir" title="PDFの保存先（FF管理フォルダ）">📁 保存先を選択</button>
+  <div class="ctl">
+    <input id="newName" placeholder="新しい商品名...">
+    <button class="p" id="add">+ 商品追加</button>
+    <label id="lbS">新商品の期限 <input class="s num" id="shelf" data-t="新商品の期限（時間）" data-dec="1" readonly inputmode="none"> 時間</label>
+    <label id="lbR">期限後 赤まで <input class="s num" id="red" data-t="期限後、赤になるまで（時間）" data-dec="1" readonly inputmode="none"> 時間</label>
+    <button id="mute" title="警告音">🔔</button>
+    <span id="sv" style="font-size:.72rem;color:var(--mu)">💾 自動保存オン</span>
+  </div>
+</div>
+<div class="tw" id="tw"><table id="tbl"><thead id="head"></thead><tbody id="body"></tbody></table></div>
+<div class="pad" id="pad">
+  <div class="pt"><span class="t" id="padT"></span><span class="pv" id="padV"></span><button id="padX">閉じる</button></div>
+  <div class="pk" id="pk"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="lock" id="lock"><div class="lk"><div id="lkT" style="font-weight:700"></div><div class="pv" id="lkV" style="margin:10px auto;width:200px">—</div><div class="pk" id="lkK" style="grid-template-columns:repeat(3,1fr);max-width:300px"></div><div id="lkM" style="color:#e03131;min-height:22px;margin-top:6px"></div><button id="lkX" style="margin-top:6px">キャンセル</button></div></div>
+<div id="rep"></div>
+<script>
+const NKEY = 'fryTracker.names', KEY = 'fryTracker.v3', BAK = 'fryTracker.bak', UKEY = 'fryTracker.undo', OLD = 'fryTracker.v2';
+const TABS = [
+  { k: 'fry', name: '揚げ物', icon: '🍗', verb: '作り', shelf: 120, items: ['ファミチキ', 'スパイシーチキン', 'クリスピーチキン'] },
+  { k: 'grill', name: '焼き鳥', icon: '🔥', verb: '作り', shelf: 120, items: ['唐揚げ塩', '唐揚げ醤油', 'ももタレ', 'もも塩', 'かわタレ', 'かわ塩'] },
+  { k: 'bao', name: '中華まん', icon: '🥟', verb: '作り', shelf: 240, items: ['肉まん', 'あんまん', 'ピザまん', 'カレーまん'] },
+  { k: 'oden', name: 'おでん', icon: '🍢', verb: '', shelf: 0, noMake: true, items: ['大根', 'たまご', 'こんにゃく', 'ちくわ', '厚揚げ', '牛すじ'] }
+];
+const uid = () => Math.random().toString(36).slice(2, 9);
+const blank = n => Array.from({ length: n }, () => ({ qty: '', out: 0, fry: null, ack: false }));
+const mk = t => ({ n: 7, shelf: t.shelf, red: 60, rows: t.items.map(x => ({ id: uid(), name: x, shelf: t.shelf, disc: 0, hist: [], b: blank(7) })) });
+let S = { active: 'fry', t: {}, mig: 1 };
+TABS.forEach(t => S.t[t.k] = mk(t));
+const readLS = k => { try { const d = JSON.parse(localStorage.getItem(k)); return d && d.t ? d : null; } catch (e) { return null; } };
+try {
+  const d = readLS(KEY) || readLS(BAK);   // 本体が壊れていてもバックアップから復元
+  if (d) { S.active = d.active || 'fry'; S.savedAt = d.savedAt || 0; S.mig = d.mig || 0; TABS.forEach(t => { if (d.t[t.k]) S.t[t.k] = d.t[t.k]; }); }
+  else { const o = JSON.parse(localStorage.getItem(OLD)); if (o && o.rows) S.t.fry = o; }
+} catch (e) {}
+let undoData = null; try { undoData = localStorage.getItem(UKEY); } catch (e) {}
+const MAP = { 'Gà rán': 'から揚げ', 'Xúc xích': 'アメリカンドッグ', 'Khoai tây chiên': 'フライドポテト', 'Cá viên chiên': 'チキンナゲット', 'Chả giò': 'コロッケ', 'Xúc xích nướng': '焼き鳥', 'Thịt xiên nướng': 'ソーセージ', 'Cánh gà nướng': '手羽先', 'Bắp nướng': '焼きとうもろこし', 'Khoai lang nướng': '焼き芋', 'Bánh bao thịt': '肉まん', 'Bánh bao trứng cút': 'あんまん', 'Bánh bao xá xíu': 'ピザまん', 'Bánh bao đậu xanh': 'カレーまん' };
+function normalize() {   // 古いデータの補完
+  if (!TABS.some(t => t.k === S.active)) S.active = 'fry';
+  TABS.forEach(tb => { if (!S.t[tb.k]) S.t[tb.k] = mk(tb); const t = S.t[tb.k]; t.red = t.red || 60;
+    t.n = Math.max(7, t.n || 0, ...t.rows.map(r => r.b.length));
+    t.rows.forEach(r => { if (MAP[r.name]) r.name = MAP[r.name]; r.hist = []; r.disc = 0; while (r.b.length < t.n) r.b.push(...blank(1)); }); });
+  applyNames(); migrateNames();
+}
+function applyNames() {   // 商品名・並び・期限は別枠の保存から必ず復元（日次データが消えても名前は残る）
+  let m = null; try { m = JSON.parse(localStorage.getItem(NKEY)); } catch (e) {}
+  if (!m) return;
+  TABS.forEach(tb => {
+    const t = S.t[tb.k], list = m[tb.k]; if (!Array.isArray(list) || !list.length) return;
+    const by = {}; t.rows.forEach(r => by[r.id] = r);
+    t.rows = list.map(x => { const r = by[x.id] || { id: x.id, name: x.name, shelf: x.shelf || t.shelf, disc: 0, hist: [], b: blank(t.n) }; r.name = x.name; if (x.shelf) r.shelf = x.shelf; return r; });
+  });
+}
+function migrateNames() {   // 既存データの商品名を新しい一覧へ（一度だけ。数量データのある行は残す）
+  if (S.mig) return; S.mig = 1;
+  const NEWN = { fry: TABS[0].items, grill: TABS[1].items };
+  Object.keys(NEWN).forEach(k => {
+    const t = S.t[k], old = t.rows, rows = [];
+    NEWN[k].forEach((nm, i) => { const r = old[i]; if (r) { r.name = nm; rows.push(r); } else rows.push({ id: uid(), name: nm, shelf: t.shelf, disc: 0, hist: [], b: blank(t.n) }); });
+    old.slice(NEWN[k].length).forEach(r => { if (r.b.some(b => b.fry)) rows.push(r); });
+    t.rows = rows;
+  });
+  setTimeout(() => save(), 0);
+}
+normalize();
+const sdb = () => new Promise((res, rej) => { const q = indexedDB.open('ffk-state', 1); q.onupgradeneeded = () => q.result.createObjectStore('s'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+async function idbPut(str) { try { const d = await sdb(); d.transaction('s', 'readwrite').objectStore('s').put(str, 'state'); } catch (e) {} }
+const idbGetState = async () => { try { const d = await sdb(); return await new Promise(r => { const q = d.transaction('s').objectStore('s').get('state'); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); } catch (e) { return null; } };
+let lastBak = 0;
+function save() {   // localStorage + バックアップ + IndexedDB の3重保存
+  S.savedAt = Date.now(); const str = JSON.stringify(S);
+  let failed = false;
+  try { const prev = localStorage.getItem(KEY); if (prev && S.savedAt - lastBak > 60000) { localStorage.setItem(BAK, prev); lastBak = S.savedAt; } localStorage.setItem(KEY, str);
+    const nm = {}; TABS.forEach(t => nm[t.k] = S.t[t.k].rows.map(r => ({ id: r.id, name: r.name, shelf: r.shelf }))); localStorage.setItem(NKEY, JSON.stringify(nm)); } catch (e) { failed = true; }
+  idbPut(str);
+  const e = $('sv'); if (e) e.textContent = failed ? '⚠ 保存できません（ブラウザの設定を確認）' : '💾 自動保存 ' + new Date().toLocaleTimeString('ja-JP');
+}
+const hm = ms => new Date(ms).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
+const $ = id => document.getElementById(id);
+const fit = el => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 2 + 'px'; };   // 商品名が全部見えるよう自動で高さを調整
+const fmtH = m => String(+(m / 60).toFixed(2));
+const cur = () => TABS.find(t => t.k === S.active), T = () => S.t[S.active];
+const reset = b => { b.qty = ''; b.out = 0; b.fry = null; b.ack = false; b.outAt = null; };
+const archive = (r, b) => { if (b.fry) r.hist.push({ fry: b.fry, qty: +b.qty || 0, out: b.out || 0 }); };
+const NAMEW = 180, ADDW = 44;
+function toast(m) { const e = $('toast'); e.textContent = m; e.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => e.style.display = 'none', 3500); }
+
+/* ---------- 音 ---------- */
+let ac = null, muted = false, lastBeep = 0, redN = 0, wl = null;
+const unlock = () => { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) {} };
+document.addEventListener('pointerdown', unlock);
+async function keepAwake() { try { if (navigator.wakeLock && !document.hidden) wl = await navigator.wakeLock.request('screen'); } catch (e) {} }   // 画面スリープ防止（警報のため）
+document.addEventListener('pointerdown', keepAwake, { once: true });
+function alarmBeat() {   // 赤い（要廃棄入力）ミスがある間、鳴り続ける
+  if (!redN) return;
+  if (!ac || ac.state !== 'running') { toast('🔔 画面をタッチすると警報音が鳴ります'); return; }
+  beep();
+}
+function beep() {
+  if (muted || !ac) return;
+  try { for (let i = 0; i < 3; i++) { const o = ac.createOscillator(), g = ac.createGain(), t0 = ac.currentTime + i * 0.35;
+    o.type = 'square'; o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + 0.2); } } catch (e) {}
+}
+$('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔕' : '🔔'; };
+
+/* ---------- テンキー ---------- */
+let P = null;
+const pk = $('pk');
+['1','2','3','⌫','4','5','6','クリア','7','8','9','確定','0','.'].forEach(k => {
+  const b = document.createElement('button'); b.textContent = k;
+  if (k === '確定') b.className = 'ok'; if (k === '0') b.className = 'z';
+  b.onclick = () => {
+    if (!P) return;
+    if (k === '⌫') P.buf = P.buf.slice(0, -1);
+    else if (k === 'クリア') P.buf = '';
+    else if (k === '.') { if (!P.inp.dataset.dec || P.buf.includes('.')) return; P.buf = (P.buf || '0') + '.'; }
+    else if (k === '確定') { closePad(true, true); return; }
+    else P.buf = (P.buf === '0' ? '' : P.buf) + k, P.buf = P.buf.slice(0, 4);
+    $('padV').textContent = P.buf || '—';
+  };
+  pk.appendChild(b);
+});
+function openPad(inp) {
+  if (P) closePad(true);
+  P = { inp, buf: String(inp.value || ''), orig: String(inp.value || '') };
+  inp.classList.add('act'); $('padT').textContent = inp.dataset.t || ''; $('padV').textContent = P.buf || '—';
+  $('pad').classList.add('on'); layout();
+  const td = inp.closest('td'); if (td) td.scrollIntoView({ block: 'center', inline: 'nearest' });
+}
+function closePad(commit, force) {
+  if (!P) return; const { inp, buf, orig } = P; P = null;
+  inp.classList.remove('act'); $('pad').classList.remove('on');
+  if (commit && (buf !== orig || (force && inp.classList.contains('o')))) { inp.value = buf; if (inp.onchange) inp.onchange(); }   // 変更時のみ反映（廃棄欄は確定で0も反映）
+  layout();
+}
+$('padX').onclick = () => closePad(false);
+document.addEventListener('click', e => { const i = e.target.closest && e.target.closest('input.num'); if (i && !(P && P.inp === i)) openPad(i); });
+
+/* ---------- 画面 ---------- */
+function layout() {
+  const tw = $('tw'), ph = P ? $('pad').offsetHeight : 0;
+  tw.style.height = Math.max(160, innerHeight - $('top').offsetHeight - ph - 20) + 'px';
+  const cw = Math.max(118, Math.floor((tw.clientWidth - NAMEW - ADDW) / 7));
+  document.documentElement.style.setProperty('--cw', cw + 'px');
+  $('tbl').style.width = (NAMEW + ADDW + cw * T().n) + 'px';
+}
+addEventListener('resize', layout);
+if (window.ResizeObserver) new ResizeObserver(layout).observe($('top'));
+
+function buildTabs() {
+  $('tabs').innerHTML = '';
+  TABS.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (t.k === S.active ? ' on' : ''); b.dataset.k = t.k;
+    b.innerHTML = `${t.icon} ${t.name}<span class="badge" style="display:none"></span>`;
+    b.onclick = () => { closePad(true); S.active = t.k; save(); buildTabs(); render(); $('tw').scrollTo(0, 0); };
+    $('tabs').appendChild(b);
+  });
+}
+
+function render() {
+  const tab = cur(), t = T();
+  $('shelf').value = fmtH(t.shelf); $('red').value = fmtH(t.red); $('lbS').style.display = $('lbR').style.display = tab.noMake ? 'none' : '';
+  $('head').innerHTML = '<tr><th class="nm0">商品</th>' + Array.from({ length: t.n }, (_, i) => `<th class="c">${i + 1}回目</th>`).join('') + '<th class="add"><button id="addCol" title="回（列）を追加">▶</button></th></tr>';
+  $('addCol').onclick = () => { t.n++; t.rows.forEach(r => r.b.push(...blank(1))); save(); render(); $('tw').scrollLeft = $('tw').scrollWidth; };
+  const body = $('body'); body.innerHTML = '';
+  t.rows.forEach(r => {
+    const tr = document.createElement('tr'); tr.dataset.id = r.id;
+    const nm = '<td class="nm"><textarea class="n" rows="1"></textarea>' + (tab.noMake ? '' : '<label class="sh">期限 <input class="h num" data-dec="1" readonly inputmode="none"> 時間</label>') + '<div class="dsc"></div><button class="del">商品削除</button></td>';
+    const cell = tab.noMake
+      ? '<div class="io"><label>廃棄<input class="o num" readonly inputmode="none"></label></div>'
+      : `<div class="io"><label>${tab.verb}<input class="q num" readonly inputmode="none"></label><label>廃棄<input class="o num" readonly inputmode="none"></label></div>`;
+    tr.innerHTML = nm + r.b.map((_, i) => `<td class="b" data-i="${i}">${cell}<div class="i"></div></td>`).join('') + '<td class="add"></td>';
+    const n = tr.querySelector('.n'); n.value = r.name; n.oninput = () => { r.name = n.value; fit(n); save(); };
+    n.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); n.blur(); } };
+    const h = tr.querySelector('.h');
+    if (h) { h.value = fmtH(r.shelf || t.shelf); h.dataset.t = '期限（時間）';
+      h.onchange = () => { r.shelf = Math.max(1, Math.round(parseFloat(h.value) * 60) || t.shelf); h.value = fmtH(r.shelf); save(); tick(); }; }
+    const del = tr.querySelector('.del');
+    del.onclick = async () => {
+      if (!del.dataset.arm) { del.dataset.arm = 1; del.textContent = 'もう一度押すと削除'; setTimeout(() => { delete del.dataset.arm; del.textContent = '商品削除'; }, 3000); return; }
+      if (r.b.some(b => b.fry) && !(await askPw('データのある商品の削除にはパスワードが必要です'))) return;
+      t.rows = t.rows.filter(x => x.id !== r.id); save(); render();
+    };
+    tr.querySelectorAll('td.b').forEach(td => {
+      const i = +td.dataset.i, b = r.b[i], q = td.querySelector('.q'), o = td.querySelector('.o'), who = r.name || '商品';
+      o.value = b.out || ''; o.dataset.t = `${who} ${i + 1}回目：廃棄数量`;
+      if (q) {
+        q.value = b.qty; q.dataset.t = `${who} ${i + 1}回目：${tab.verb}数量`;
+        q.onchange = async () => {
+          const v = parseInt(q.value, 10);
+          if (v > 0) { newDay(); b.qty = v; b.fry = Date.now(); b.out = Math.min(b.out || 0, v); b.ack = false; }  // 数量入力 → 時刻を記録
+          else {
+            if (b.fry && !(await askPw('入力済みの数量を消すにはパスワードが必要です'))) { q.value = b.qty; return; }   // 取消と同じく保護
+            reset(b);
+          }
+          q.value = b.qty; o.value = b.out || ''; save(); tick();
+        };
+      }
+      o.onchange = async () => {
+        const v = Math.max(0, parseInt(o.value, 10) || 0);
+        if (tab.noMake) {
+          if (v > 0) { newDay(); b.qty = v; b.out = v; b.fry = Date.now(); b.ack = true; }
+          else {
+            if (b.fry && !(await askPw('入力済みの廃棄数を消すにはパスワードが必要です'))) { o.value = b.out || ''; return; }
+            reset(b);
+          }
+        } else { if (!b.fry) { o.value = ''; return; } newDay(); b.out = Math.min(v, b.qty); b.ack = true; b.outAt = Date.now(); }   // 0 も「確認済み」
+        o.value = b.out || ''; if (q) q.value = b.qty; save(); tick();
+      };
+    });
+    body.appendChild(tr); fit(n);
+  });
+  layout(); tick();
+}
+
+function tick() {
+  const now = Date.now(), tab = cur(), t = T(), reds = [];
+  document.querySelectorAll('#body tr').forEach(tr => {
+    const r = t.rows.find(x => x.id === tr.dataset.id); if (!r) return;
+    const sh = (r.shelf || t.shelf) * 60000, cb = r.b.filter(b => b.fry);
+    const tq = cb.reduce((a, x) => a + (+x.qty || 0), 0), to = cb.reduce((a, x) => a + (x.out || 0), 0);   // 集計は今ある入力だけ（取消すと引かれる）
+    tr.querySelector('.dsc').innerHTML = (tab.noMake ? '' : `${tab.verb}計 <b>${tq}</b><br>`) + `廃棄計 <b>${to}</b>`;
+    tr.querySelectorAll('td.b').forEach(td => {
+      const b = r.b[+td.dataset.i], info = td.querySelector('.i'); td.className = 'b';
+      if (!b.fry) { info.innerHTML = ''; return; }
+      let html;
+      if (tab.noMake) { td.classList.add('pl'); html = `入力 <b>${hm(b.fry)}</b>`; }
+      else {
+        const exp = b.fry + sh, left = exp - now, head = `${tab.verb} <b>${hm(b.fry)}</b><br>期限 <b>${hm(exp)}</b>`;
+        const rest = b.qty - (b.out || 0), tail = b.out >= b.qty ? '<br><b>全数廃棄</b>' : `<br>売り <b>${rest}</b> 個`;
+        if (left > 0) { td.classList.add('ok'); html = head + tail; }                       // 期限前：緑
+        else if (!b.ack && -left >= t.red * 60000) { td.classList.add('red'); reds.push(td); html = head + `<br><b>要廃棄入力！</b>` + tail; }   // 未入力のまま超過：赤＋警報
+        else { td.classList.add('yel'); html = head + '<br><b>期限切れ</b>' + tail; }          // 期限切れ：薄いピンク（廃棄を入力しても色は変えない）
+      }
+      info.innerHTML = html + '<button class="clr">取消</button>';
+      info.querySelector('.clr').onclick = async () => {
+        if (!(await askPw('取消にはパスワードが必要です'))) return;
+        reset(b); const q = td.querySelector('.q'); if (q) q.value = ''; td.querySelector('.o').value = ''; save(); tick();
+      };   // 取消は集計に入らない
+    });
+  });
+  TABS.forEach(tb => {
+    if (tb.noMake) return;
+    const d = S.t[tb.k]; let y = 0, rd = 0;
+    d.rows.forEach(r => r.b.forEach(b => { if (!b.fry || b.out >= b.qty) return; const l = b.fry + (r.shelf || d.shelf) * 60000 - now; if (l <= 0) { y++; if (!b.ack && -l >= d.red * 60000) rd++; } }));
+    const el = document.querySelector(`.tab[data-k="${tb.k}"] .badge`);
+    if (el) { el.textContent = y; el.style.display = y ? '' : 'none'; el.className = 'badge' + (rd ? ' r' : ''); }
+  });
+  redN = reds.length;
+  if (!redN) lastBeep = 0;
+  else if (now - lastBeep >= 60000) { lastBeep = now; alarmBeat(); if (!P) openPad(reds[0].querySelector('.o')); }   // 廃棄入力欄を自動表示（1分おきに再表示）
+}
+
+function addItem() {
+  const name = $('newName').value.trim(), t = T();
+  t.rows.push({ id: uid(), name, shelf: t.shelf, disc: 0, hist: [], b: blank(t.n) });
+  $('newName').value = ''; save(); render();
+  const a = document.querySelectorAll('#body .n'), last = a[a.length - 1];
+  if (!name) last.focus(); last.scrollIntoView({ block: 'nearest' });
+}
+$('add').onclick = addItem;
+$('newName').onkeydown = e => { if (e.key === 'Enter') addItem(); };
+$('shelf').onchange = () => { const t = T(), el = $('shelf'); t.shelf = Math.max(1, Math.round(parseFloat(el.value) * 60) || 120); el.value = fmtH(t.shelf); save(); };
+$('red').onchange = () => { const t = T(), el = $('red'); t.red = Math.max(1, Math.round(parseFloat(el.value) * 60) || 60); el.value = fmtH(t.red); save(); tick(); };
+
+/* ---------- 終了 → PDF ---------- */
+const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+function buildPages(d, made) {
+  const title = `<h1 style="font-size:22px;margin:0 0 12px">FF管理帳　${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日</h1>`;
+  let GQ = 0, GO = 0; const secs = [];
+  TABS.forEach(tab => {
+    const rows = []; let tq = 0, to = 0;
+    S.t[tab.k].rows.forEach(r => {
+      const all = r.b.filter(b => b.fry).map(b => ({ fry: b.fry, qty: +b.qty || 0, out: b.out || 0 })).sort((a, b) => a.fry - b.fry);
+      if (!all.length) return;
+      const q = tab.noMake ? 0 : all.reduce((a, x) => a + x.qty, 0), o = all.reduce((a, x) => a + x.out, 0);
+      tq += q; to += o;
+      const det = all.map(x => tab.noMake ? `${hm(x.fry)}　廃棄 ${x.out}個` : `${hm(x.fry)}　${x.qty}個（廃棄 ${x.out}）`).join('<br>');
+      rows.push({ h: all.length * 17 + 12, html: `<tr><td>${esc(r.name || '(名称未設定)')}</td><td>${det}</td>${tab.noMake ? '' : `<td class="r">${q}</td>`}<td class="r">${o}</td></tr>` });
+    });
+    GQ += tq; GO += to; secs.push({ tab, rows, tq, to });
+  });
+  const BUDGET = 940, pages = []; let parts = [title], H = 50;
+  const newPage = () => { pages.push(parts.join('')); parts = []; H = 0; };
+  secs.forEach(s => {
+    const tab = s.tab, nm = tab.noMake, rows = s.rows.slice(); let cont = false;
+    const head = `<tr><th style="width:24%">商品</th><th>${nm ? '入力時刻・廃棄数' : tab.verb + '時刻・数量（廃棄）'}</th>${nm ? '' : `<th style="width:12%">${tab.verb}合計</th>`}<th style="width:12%">廃棄合計</th></tr>`;
+    const h2 = c => `<h2 style="font-size:16px;margin:10px 0 6px">${tab.icon} ${tab.name}${c ? '（続き）' : ''}　（${nm ? '' : `${tab.verb}合計 ${s.tq} 個 ／ `}廃棄合計 ${s.to} 個）</h2>`;
+    do {
+      if (H + 90 + (rows[0] ? rows[0].h : 30) > BUDGET) newPage();
+      const take = []; let hh = H + 90;
+      while (rows.length && hh + rows[0].h <= BUDGET) { const r = rows.shift(); take.push(r.html); hh += r.h; }
+      if (!take.length && rows.length) take.push(rows.shift().html);
+      parts.push(h2(cont) + `<table>${head}${take.join('') || `<tr><td colspan="${nm ? 3 : 4}">記録なし</td></tr>`}</table>`);
+      H = hh + 14; cont = true;
+      if (rows.length) newPage();
+    } while (rows.length);
+  });
+  if (H + 50 > BUDGET) newPage();
+  parts.push(`<h2 style="font-size:17px;margin-top:14px">本日の総合計：数量 ${GQ} 個 ／ 廃棄 ${GO} 個</h2>`);
+  pages.push(parts.join(''));
+  return pages.map((p, i) => `<div style="height:1043px;position:relative">${p}<div style="position:absolute;bottom:0;right:0;font-size:12px;color:#666">${i + 1} / ${pages.length}</div></div>`);
+}
+
+/* 保存先フォルダ（FF管理）: 対応ブラウザ（PC版 Chrome / Edge）のみ。非対応は通常ダウンロード */
+let dirH = null, busy = false;
+const idb = () => new Promise((res, rej) => { const q = indexedDB.open('ffk', 1); q.onupgradeneeded = () => q.result.createObjectStore('h'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+const hSet = async v => { try { const d = await idb(); await new Promise(r => { const t = d.transaction('h', 'readwrite'); t.objectStore('h').put(v, 'dir'); t.oncomplete = r; t.onerror = r; }); } catch (e) {} };
+const hGet = async () => { try { const d = await idb(); return await new Promise(r => { const q = d.transaction('h').objectStore('h').get('dir'); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); } catch (e) { return null; } };
+const updDir = () => { $('dir').textContent = dirH ? '📁 ' + dirH.name : '📁 保存先を選択'; };
+hGet().then(h => { dirH = h || null; updDir(); });
+$('dir').onclick = async () => {
+  if (!window.showDirectoryPicker) { toast('このブラウザではフォルダ指定ができません。PDFはダウンロードフォルダに保存されます'); return; }
+  try {
+    let h = await window.showDirectoryPicker({ mode: 'readwrite' });
+    if (h.name !== 'FF管理') h = await h.getDirectoryHandle('FF管理', { create: true });
+    dirH = h; await hSet(h); updDir(); toast('保存先：' + h.name);
+  } catch (e) {}
+};
+
+async function endDay() {
+  if (busy) return; busy = true; closePad(true);
+  let dirOK = false;
+  if (dirH) { try { dirOK = (await dirH.requestPermission({ mode: 'readwrite' })) === 'granted'; } catch (e) {} }
+  toast('PDFを作成中…');
+  try {
+    if (!window.html2canvas || !window.jspdf) throw new Error('lib');
+    const now = new Date(), d = new Date(now.getTime() - 864e5), p = n => String(n).padStart(2, '0'), base = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    const pages = buildPages(d, now), doc = new window.jspdf.jsPDF('p', 'mm', 'a4'), rep = $('rep'); doc.setProperties({ title: 'FF管理帳' });
+    for (let i = 0; i < pages.length; i++) {
+      rep.innerHTML = pages[i]; const cv = await html2canvas(rep, { scale: 2, backgroundColor: '#fff' });
+      if (i) doc.addPage(); doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+    }
+    let msg;
+    if (dirOK) {
+      let nm = base + '.pdf', k = 1;
+      for (;;) { try { await dirH.getFileHandle(nm); k++; nm = `${base}_${k}.pdf`; } catch (e) { break; } }   // 同じ日に複数回でも上書きしない
+      const w = await (await dirH.getFileHandle(nm, { create: true })).createWritable(); await w.write(doc.output('blob')); await w.close();
+      msg = `${dirH.name}フォルダに保存しました：${nm}`;
+    } else { doc.save(base + '.pdf'); msg = `ダウンロードに保存しました：${base}.pdf（FF管理フォルダへ移動してください）`; }
+    undoData = JSON.stringify(S); try { localStorage.setItem(UKEY, undoData); } catch (e) {}
+    TABS.forEach(tb => { const t = S.t[tb.k]; t.rows.forEach(r => { r.b = blank(t.n); r.hist = []; r.disc = 0; }); });
+    save(); render(); upUndo(); toast(msg);
+  } catch (e) { toast('PDF作成に失敗しました（データは消していません）'); }
+  busy = false;
+}
+function upUndo() { $('undo').disabled = !undoData; }
+function newDay() { if (!undoData) return; undoData = null; try { localStorage.removeItem(UKEY); } catch (e) {} upUndo(); }   // 入力が始まったら前日には戻れない
+const PW = '56552';
+function askPw(msg) {
+  return new Promise(res => {
+    let buf = ''; const L = $('lock'), V = $('lkV'), K = $('lkK'), M = $('lkM');
+    $('lkT').textContent = msg; M.textContent = ''; V.textContent = '—'; K.innerHTML = '';
+    const done = ok => { L.classList.remove('on'); res(ok); };
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', '確定'].forEach(k => {
+      const b = document.createElement('button'); b.textContent = k; if (k === '確定') b.className = 'okb';
+      b.onclick = () => {
+        if (k === '⌫') buf = buf.slice(0, -1);
+        else if (k === '確定') { if (buf === PW) { done(true); return; } M.textContent = 'パスワードが違います'; buf = ''; }
+        else if (buf.length < 8) buf += k;
+        V.textContent = buf ? '●'.repeat(buf.length) : '—';
+      };
+      K.appendChild(b);
+    });
+    $('lkX').onclick = () => done(false);
+    L.classList.add('on');
+  });
+}
+$('end').onclick = async () => { if (busy) return; closePad(true); if (await askPw('終了するにはパスワードを入力してください')) endDay(); };
+addEventListener('beforeunload', e => { e.preventDefault(); e.returnValue = ''; });   // 誤って閉じそうになったら確認（対応ブラウザのみ）
+$('undo').onclick = () => {
+  if (!undoData) return; closePad(false);
+  S = JSON.parse(undoData); normalize(); undoData = null; try { localStorage.removeItem(UKEY); } catch (e) {}
+  save(); buildTabs(); render(); upUndo(); toast('終了前の状態に戻しました');
+};
+upUndo(); buildTabs(); render();
+setInterval(tick, 5000); setInterval(alarmBeat, 2500); setInterval(save, 10000);   // 10秒ごとにも自動保存
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); else keepAwake(); });
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}   // ブラウザによる自動削除を防ぐ
+idbGetState().then(str => { try {   // IndexedDB のほうが新しければ復元
+  const d = JSON.parse(str);
+  if (d && d.t && d.savedAt > (S.savedAt || 0)) { S.active = d.active || 'fry'; S.mig = d.mig || 0; TABS.forEach(t => { if (d.t[t.k]) S.t[t.k] = d.t[t.k]; }); S.savedAt = d.savedAt; normalize(); buildTabs(); render(); toast('バックアップから復元しました'); }
+} catch (e) {} });
+</script>
+</body>
+</html>
